@@ -384,9 +384,9 @@ orbits.TLE.prototype.toString = function() {
 }
 
 /**
- *takes orbit.TLE object and runs the SGP4 model
+ * Takes orbit.TLE object and initialized the SGP4 model
  * @class
- * @param           {orbit.TLE}
+ * @param  {orbit.TLE} tleObj - An instance of orbits.TLE
  */
 orbits.Orbit = function(tleObj) {
     "use strict";
