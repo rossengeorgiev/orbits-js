@@ -1,28 +1,32 @@
-/* @project orbits
- * @author Rossen Georgiev @ https://github.com/rossengeorgiev
+/**
+ * orbits-js
+ * @author Rossen Georgiev @ {@link https://github.com/rossengeorgiev}
  * @description A tiny library that can parse TLE, and display the orbit on the map
- * Requires: GMaps API 3
+ * @requires: GMaps API 3
  *
  * @version 1.0.0
  * @namespace
  */
 var orbits = {
     version: '1.0.0',
-    /* @namespace
+    /**
+     * @namespace
      */
     util: {}
 }
 
-/* takes a Date object and return julian day
- * @param   {Date} date
+/**
+ * takes a Date instance and return julian day
+ * @param   {Date} date - Date instance
  * @returns {float}
  */
 orbits.util.jday = function(date) {
     return (date.getTime() / 86400000.0) + 2440587.5;
 }
 
-/* takes a Date object and returns Greenwich mean sidereal time in radians
- * @param   {Date} date
+/**
+ * takes a Date instance and returns Greenwich mean sidereal time in radii
+ * @param   {Date} date - Date instance
  * @returns {float}
  */
 orbits.util.gmst = function(date) {
@@ -36,14 +40,41 @@ orbits.util.gmst = function(date) {
     return gmst;
 }
 
-/* Object with the default options for Satellite object
- * @prop {orbits.TLE}           tle          - An obj instance of a parsed TLE
+/**
+ * Parses a string with one or more TLEs
+ * @param       {string} text - A string containing one or more TLEs
+ * @returns     {array.<orbits.TLE>} An array of orbit.TLE instances
+ */
+orbits.util.parseTLE = function(text) {
+    "use strict";
+    if(!text || typeof text != "string" || text == "") return [];
+
+    var lines = text.split("\n");
+
+    // trim emepty lines
+    for(var i = 0; i < lines.length; i++) if(lines[i] == "") lines.splice(i,1);
+
+    // see if we got somethin reasonable
+    if(lines.length < 3) return [];
+    if(lines.length % 3 != 0) throw SyntaxError("The number of lines should be multiple of 3");
+
+    // try and make the array
+    var three;
+    var array = [];
+    while(lines.length) array.push(new orbits.TLE(lines.splice(0,3).join("\n")));
+
+    return array;
+}
+
+/**
+ *Object with the default options for Satellite object
+ * @prop {orbits.TLE}           tle          - An instance of orbits.TLE
  * @prop {string}               title        - Alternative title to use for the marker, instead of the one from TLE
  * @prop {float}                pathLength   - The length is in periods. Length = period * pathLength
- * @prop {boolean}              visible      - Visible or not
- * @prop {google.maps.Map}      map          - An obj instance of google maps
- * @prop {google.maps.Marker}   marker       - An obj instance of Marker to use instead of the default
- * @prop {google.maps.Polyline} polyline     - An obj instance of Polyline to use instead of the default
+ * @prop {boolean}              visible      - Whenever to display the map or not
+ * @prop {google.maps.Map}      map          - An instance of google.maps.Map
+ * @prop {google.maps.Marker}   marker       - An instance of google.maps.Marker to use instead of the default
+ * @prop {google.maps.Polyline} polyline     - An instance of google.maps.Polyline to use instead of the default
  */
 orbits.SatelliteOptions = {
     tle: "",
@@ -55,9 +86,10 @@ orbits.SatelliteOptions = {
     polyline: null,
 }
 
-/* Initializes a Satellite object
+/**
+ *Initializes a Satellite object
  * @class
- * @param   {orbits.SatelliteOptions}     - an obj with options, see orbits.SatelliteOptions
+ * @param   {orbits.SatelliteOptions} options - an obj with options, see orbits.SatelliteOptions
  */
 orbits.Satellite = function(options) {
     "use strict";
@@ -86,7 +118,7 @@ orbits.Satellite = function(options) {
     });
 
     // attach markers to map
-    this.setMap(this.map);
+    if(this.visible) this.setMap(this.map);
 
     // check if we have TLE and init orbit
     if(this.tle != null && !(this.tle instanceof orbits.TLE)) this.tle = null;
@@ -96,8 +128,9 @@ orbits.Satellite = function(options) {
     this.refresh();
 }
 
-/* Change the map object
- * @param   {google.maps.Map}   map
+/**
+ * Set the map instance to use
+ * @param   {google.maps.Map} map - An instance of google.maps.Map
  */
 orbits.Satellite.prototype.setMap = function(map) {
     this.map = map;
@@ -105,7 +138,8 @@ orbits.Satellite.prototype.setMap = function(map) {
     this.polyline.setMap(this.map);
 }
 
-/* Recalculates the position and updates the markers
+/**
+ *Recalculates the position and updates the markers
  */
 orbits.Satellite.prototype.refresh = function() {
     if(!this.visible || this.orbit == null || this.map == null) return;
@@ -139,17 +173,19 @@ orbits.Satellite.prototype._updatePoly = function() {
     this.polyline.setPath(this.path);
 }
 
-/* Initializes a TLE object containing parsed TLE
+/**
+ * Initializes a TLE object containing parsed TLE
  * @class
- * @param {string} a TLE string
+ * @param {string} text - A TLE string of 3 lines
  */
 orbits.TLE = function(text) {
     this.text = text;
     this.parse(this.text);
 }
 
-/* parses TLE string and sets the proporties
- * @param {string} a TLE string
+/**
+ * Parses TLE string and sets the proporties
+ * @param {string} text - A TLE string of 3 lines
  */
 orbits.TLE.prototype.parse = function(text) {
     "use strict";
@@ -165,29 +201,102 @@ orbits.TLE.prototype.parse = function(text) {
 
     // TODO: verify line using the checksum in field 14
 
+    /**
+     * Satellite Number
+     * @type {int}
+     * @readonly
+     */
     this.satelite_number = parseInt(lines[1].substring(2,7));
+
+    /**
+     * Classification (U=Unclassified)
+     * @type {string}
+     * @readonly
+     */
     this.classification = lines[1].substring(7,8);
+
+    /**
+     * International Designator (Last two digits of launch year, eg. '98')
+     * @type {string}
+     * @readonly
+     */
     this.intd_year = lines[1].substring(9,11);
-    this.intd_ln = parseInt(lines[1].substring(11,14));
+
+    /**
+     * International Designator (Launch number of the year, eg. '067')
+     * @type {string}
+     * @readonly
+     */
+    this.intd_ln = lines[1].substring(11,14);
+
+    /**
+     * International Designator (Piece of the launch, eg. 'A')
+     * @type {string}
+     * @readonly
+     */
     this.intd_place = lines[1].substring(14,17).trim();
+
+    /**
+     * International Designator (eg. 98067A)
+     * @type {string}
+     * @readonly
+     */
     this.intd = lines[1].substring(9,17).trim();
 
-    /* Apparently, US Space Command sees no need to change the two-line element set format yet since no artificial earth satellites existed prior to 1957. By their reasoning, two-digit years from 57-99 correspond to 1957-1999 and those from 00-56 correspond to 2000-2056. */
+    /**
+     * Epoch Year (Full year)
+     * @type {int}
+     * @readonly
+     */
     this.epoch_year = parseInt(lines[1].substring(18,20));
     this.epoch_year += (this.epoch_year < 57) ? 2000 : 1000;
+
+    /**
+     * Epoch (Day of the year and fractional portion of the day)
+     * @type {float}
+     * @readonly
+     */
     this.epoch_day = parseFloat(lines[1].substring(20,32));
 
+    /**
+     * First Time Derivative of the Mean Motion divided by two
+     * @type {float}
+     * @readonly
+     */
     this.ftd = parseFloat(lines[1].substring(33,43));
 
+    /**
+     * Second Time Derivative of Mean Motion divided by six
+     * @type {float}
+     * @readonly
+     */
+    this.std = 0;
     var tmp = lines[1].substring(44,52).split('-');
     if(tmp.length == 3) this.std = -1 * parseFloat("."+tmp[1].trim()) * Math.pow(10,-parseInt(tmp[2]));
     else this.std = parseFloat("."+tmp[0].trim()) * Math.pow(10,-parseInt(tmp[1]));
 
+    /**
+     * BSTAR drag term
+     * @type {float}
+     * @readonly
+     */
+    this.bstar = 0;
     var tmp = lines[1].substring(53,61).split('-');
     if(tmp.length == 3) this.bstar = -1 * parseFloat("."+tmp[1].trim()) * Math.pow(10,-parseInt(tmp[2]));
     else this.bstar = parseFloat("."+tmp[0].trim()) * Math.pow(10,-parseInt(tmp[1]));
 
+    /**
+     * The number 0 (Originally this should have been "Ephemeris type")
+     * @type {int}
+     * @readonly
+     */
     this.ehemeris_type = parseInt(lines[1].substring(62,63));
+
+    /**
+     * Element set number. incremented when a new TLE is generated for this object.
+     * @type {int}
+     * @readonly
+     */
     this.element_number = parseInt(lines[1].substring(64,68));
 
     // parse third line
@@ -195,18 +304,60 @@ orbits.TLE.prototype.parse = function(text) {
 
     // TODO: verify line using the checksum in field 14
 
+    /**
+     * Inclination [Degrees]
+     * @type {float}
+     * @readonly
+     */
     this.inclination = parseFloat(lines[2].substring(8,16));
+
+    /**
+     * Right Ascension of the Ascending Node [Degrees]
+     * @type {float}
+     * @readonly
+     */
     this.right_ascension = parseFloat(lines[2].substring(17,25));
+
+    /**
+     * Eccentricity 
+     * @type {float}
+     * @readonly
+     */
     this.eccentricity = parseFloat("."+lines[2].substring(26,33).trim());
+
+    /**
+     * Argument of Perigee [Degrees]
+     * @type {float}
+     * @readonly
+     */
     this.argument_of_perigee = parseFloat(lines[2].substring(34,42));
+
+    /**
+     * Mean Anomaly [Degrees]
+     * @type {float}
+     * @readonly
+     */
     this.mean_anomaly = parseFloat(lines[2].substring(43,51));
+
+    /**
+     * Mean Motion [Revs per day]
+     * @type {float}
+     * @readonly
+     */
     this.mean_motion = parseFloat(lines[2].substring(52,63));
+
+    /**
+     * Revolution number at epoch [Revs]
+     * @type {int}
+     * @readonly
+     */
     this.epoch_rev_number = parseInt(lines[2].substring(63,68));
 
 }
 
-/* takes a date object and returns the different between it and TLE's epoch
- * @param       {Date}
+/**
+ * Takes a date instance and returns the different between it and TLE's epoch
+ * @param       {Date} date - A instance of Date
  * @returns     {int} delta time in millis
  */
 orbits.TLE.prototype.dtime = function(date) {
@@ -215,36 +366,16 @@ orbits.TLE.prototype.dtime = function(date) {
     return (a - b) * 1440.0; // in minutes
 }
 
+/**
+ * Returns the TLE string
+ * @returns {string} TLE string in 3 lines
+ */
 orbits.TLE.prototype.toString = function() {
     return this.text;
 }
 
-/* Parses a string with one or more TLEs
- * @param       {string}
- * @returns     {array.<orbits.TLE>}
- */
-orbits.parseTLE = function(tle_text) {
-    "use strict";
-    if(!tle_text || typeof tle_text != "string" || tle_text == "") return [];
-
-    var lines = tle_text.split("\n");
-
-    // trim emepty lines
-    for(var i = 0; i < lines.length; i++) if(lines[i] == "") lines.splice(i,1);
-
-    // see if we got somethin reasonable
-    if(lines.length < 3) return [];
-    if(lines.length % 3 != 0) throw SyntaxError("The number of lines should be multiple of 3");
-
-    // try and make the array
-    var three;
-    var array = [];
-    while(lines.length) array.push(new orbits.TLE(lines.splice(0,3).join("\n")));
-
-    return array;
-}
-
-/* takes orbit.TLE object and runs the SGP4 model
+/**
+ *takes orbit.TLE object and runs the SGP4 model
  * @class
  * @param           {orbit.TLE}
  */
@@ -374,7 +505,8 @@ orbits.Orbit = function(tleObj) {
     this.xnodp = xnodp;
 }
 
-/* calculates position and velocity vectors based date set on the Orbit object
+/**
+ *calculates position and velocity vectors based date set on the Orbit object
  */
 orbits.Orbit.prototype.propagate = function() {
     "use strict";
@@ -496,11 +628,19 @@ orbits.Orbit.prototype.propagate = function() {
     this.ydot = (rdotk * uy + rfdotk * vy) * this.xkmper;
     this.zdot = (rdotk * uz + rfdotk * vz) * this.xkmper;
 
-    // orbit period in seconds
+    /**
+     * orbit period in seconds
+     * @type {float}
+     * @readonly
+     */
     this.period = this.twopi * Math.sqrt(Math.pow(this.aodp * this.xkmper , 3)/398600.4);
 
-    // speed
-    this.speed = Math.sqrt(this.xdot*this.xdot + this.ydot*this.ydot + this.zdot*this.zdot) / 60; // kmps
+    /**
+     * velocity in km per second
+     * @type {float}
+     * @readonly
+     */
+    this.velocity = Math.sqrt(this.xdot*this.xdot + this.ydot*this.ydot + this.zdot*this.zdot) / 60; // kmps
 
     // lat, lon and altitude
     // based on http://www.celestrak.com/columns/v02n03/
@@ -522,6 +662,11 @@ orbits.Orbit.prototype.propagate = function() {
         latitude = Math.atan2 (this.z + (a*C*e2*Math.sin(latitude)), R);
     }
 
+    /**
+     * Altitude in kms
+     * @type {float}
+     * @readonly
+     */
     this.altitude = (R/Math.cos(latitude)) - (a*C);
 
     // convert from radii to degrees
@@ -530,39 +675,55 @@ orbits.Orbit.prototype.propagate = function() {
     else if(longitude < -180) longitude = 360 + longitude;
     latitude  = (latitude / this.torad);
 
+    /**
+     * latitude in degrees
+     * @type {float}
+     * @readonly
+     */
     this.latitude = latitude;
+
+    /**
+     * longtitude in degrees
+     * @type {float}
+     * @readonly
+     */
     this.longitude = longitude;
 }
 
-/* Change the datetime, or null for to use current
+/**
+ * Change the datetime, or null for to use current
  * @param {Date} date
  */
 orbits.Orbit.prototype.setDate = function(date) {
     this.date = date;
 }
 
-/* get position in LatLng
+/**
+ * get position in LatLng
  * @returns {google.maps.LatLng}
  */
 orbits.Orbit.prototype.getPosition = function() {
     return new google.maps.LatLng(this.latitude, this.longitude);
 }
 
-/* get altitude in km
+/**
+ * get altitude in km
  * @returns {float}
  */
 orbits.Orbit.prototype.getAltitude = function() {
     return this.altitude;
 }
 
-/* get speed in km per seconds
+/**
+ * get velocity in km per seconds
  * @returns {float}
  */
-orbits.Orbit.prototype.getSpeed = function() {
-    return this.speed;
+orbits.Orbit.prototype.getVelocity = function() {
+    return this.velocity;
 }
 
-/* get period in seconds
+/**
+ *get period in seconds
  * @returns {float}
  */
 orbits.Orbit.prototype.getSpeed = function() {

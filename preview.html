@@ -40,7 +40,7 @@ var stations;
 var sats = [];
 
 $.get("stations.txt", function(data) {
-    stations = orbits.parseTLE(data);
+    stations = orbits.util.parseTLE(data);
     //console.log(stations);
 
     var i = 0;
