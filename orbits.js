@@ -1,31 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <title>JSDoc: Source: orbits.js</title>
-
-    <script src="scripts/prettify/prettify.js"> </script>
-    <script src="scripts/prettify/lang-css.js"> </script>
-    <!--[if lt IE 9]>
-      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
-    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
-</head>
-
-<body>
-
-<div id="main">
-
-    <h1 class="page-title">Source: orbits.js</h1>
-
-    
-
-
-    
-    <section>
-        <article>
-            <pre class="prettyprint source linenums"><code>/**
+/**
  * orbits-js
  * @author Rossen Georgiev @ {@link https://github.com/rossengeorgiev}
  * @description A tiny library that can parse TLE, and display the orbit on the map
@@ -63,14 +36,14 @@ orbits.util.gmst = function(date) {
     // based on http://www.space-plasma.qmul.ac.uk/heliocoords/systems2art/node10.html
     var gmst = 67310.54841 + (876600.0*3600 + 8640184.812866) * t + 0.093104 * t*t - 0.0000062 * t*t*t;
     gmst = (gmst * (Math.PI/180) / 240.0) % (Math.PI*2);
-    gmst += (gmst&lt;0) ? Math.PI*2 : 0;
+    gmst += (gmst<0) ? Math.PI*2 : 0;
     return gmst;
 }
 
 /**
  * Parses a string with one or more TLEs
  * @param       {string} text - A string containing one or more TLEs
- * @returns     {array.&lt;orbits.TLE>} An array of orbit.TLE instances
+ * @returns     {array.<orbits.TLE>} An array of orbit.TLE instances
  */
 orbits.util.parseTLE = function(text) {
     "use strict";
@@ -79,10 +52,10 @@ orbits.util.parseTLE = function(text) {
     var lines = text.split("\n");
 
     // trim emepty lines
-    for(var i = 0; i &lt; lines.length; i++) if(lines[i] == "") lines.splice(i,1);
+    for(var i = 0; i < lines.length; i++) if(lines[i] == "") lines.splice(i,1);
 
     // see if we got somethin reasonable
-    if(lines.length &lt; 3) return [];
+    if(lines.length < 3) return [];
     if(lines.length % 3 != 0) throw SyntaxError("The number of lines should be multiple of 3");
 
     // try and make the array
@@ -148,7 +121,7 @@ orbits.Satellite = function(options) {
     if(this.visible) this.setMap(this.map);
 
     // check if we have TLE and init orbit
-    if(this.tle != null &amp;&amp; !(this.tle instanceof orbits.TLE)) this.tle = null;
+    if(this.tle != null && !(this.tle instanceof orbits.TLE)) this.tle = null;
     if(this.tle != null) this._initOrbit();
 
     // refresh
@@ -200,7 +173,7 @@ orbits.Satellite.prototype._updatePoly = function() {
 
     var i = 1;
     var jj = 180 * this.pathLength;
-    for(; i &lt;= jj; i++) {
+    for(; i <= jj; i++) {
         this.orbit.setDate(new Date(date.getTime() + dt*i));
         this.orbit.propagate();
         this.path.push(this.orbit.getPosition());
@@ -285,7 +258,7 @@ orbits.TLE.prototype.parse = function(text) {
      * @readonly
      */
     this.epoch_year = parseInt(lines[1].substring(18,20));
-    this.epoch_year += (this.epoch_year &lt; 57) ? 2000 : 1000;
+    this.epoch_year += (this.epoch_year < 57) ? 2000 : 1000;
 
     /**
      * Epoch (Day of the year and fractional portion of the day)
@@ -463,14 +436,14 @@ orbits.Orbit = function(tleObj) {
     var aodp = ao/(1.0 - delo); //semi_major_axis
 
     // initialization
-    this.isimp = ((aodp*(1.0-this.eo)/this.ae) &lt; (220.0/this.xkmper+this.ae)) ? 1 : 0;
+    this.isimp = ((aodp*(1.0-this.eo)/this.ae) < (220.0/this.xkmper+this.ae)) ? 1 : 0;
 
     var s4 = this.s;
     var qoms24 = this.qoms2t;
     var perige = (aodp * (1.0-this.eo) - this.ae) * this.xkmper;
-    if (perige &lt; 156.0){
+    if (perige < 156.0){
         s4 = perige - 78.0;
-        if (perige &lt;= 98.0){
+        if (perige <= 98.0){
           s4 = 20.0;
         } else {
           var qoms24 = Math.pow(((120.0 - s4)*this.ae/this.xkmper), 4);
@@ -593,7 +566,7 @@ orbits.Orbit.prototype.propagate = function() {
     var capu = (xlt-xnode)%(2.0*Math.PI);
     var temp2 = capu;
     var i;
-    for (i=1; i&lt;=10; i++){
+    for (i=1; i<=10; i++){
         var sinepw = Math.sin(temp2);
         var cosepw = Math.cos(temp2);
         var temp3 = axn * sinepw;
@@ -601,7 +574,7 @@ orbits.Orbit.prototype.propagate = function() {
         var temp5 = axn * cosepw;
         var temp6 = ayn * sinepw;
         var epw = (capu - temp4 + temp3 - temp2)/(1.0 - temp5 - temp6) + temp2;
-        if (Math.abs(epw - temp2) &lt;= this.e6a){
+        if (Math.abs(epw - temp2) <= this.e6a){
             break
         }
         temp2 = epw;
@@ -623,7 +596,7 @@ orbits.Orbit.prototype.propagate = function() {
     var cosu = temp2 * (cosepw - axn + ayn * esine * temp3);
     var sinu = temp2 * (sinepw - ayn - axn * esine * temp3);
     var u = Math.atan2(sinu,cosu);
-    u += (u&lt;0) ? 2* Math.PI : 0;
+    u += (u<0) ? 2* Math.PI : 0;
     var sin2u = 2.0 * sinu * cosu;
     var cos2u = 2.0 * cosu * cosu - 1.;
     var temp = 1.0/pl;
@@ -708,7 +681,7 @@ orbits.Orbit.prototype.propagate = function() {
     // convert from radii to degrees
     longitude  = (longitude / this.torad) % 360;
     if(longitude > 180) longitude = 360 - longitude;
-    else if(longitude &lt; -180) longitude = 360 + longitude;
+    else if(longitude < -180) longitude = 360 + longitude;
     latitude  = (latitude / this.torad);
 
     /**
@@ -765,26 +738,3 @@ orbits.Orbit.prototype.getVelocity = function() {
 orbits.Orbit.prototype.getSpeed = function() {
     return this.period;
 }
-</code></pre>
-        </article>
-    </section>
-
-
-
-
-</div>
-
-<nav>
-    <h2><a href="index.html">Index</a></h2><h3>Classes</h3><ul><li><a href="orbits.Orbit.html">Orbit</a></li><li><a href="orbits.Satellite.html">Satellite</a></li><li><a href="orbits.TLE.html">TLE</a></li></ul><h3>Namespaces</h3><ul><li><a href="orbits.html">orbits</a></li><li><a href="orbits.util.html">util</a></li></ul>
-</nav>
-
-<br clear="both">
-
-<footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-alpha5</a> on Sun Jun 08 2014 07:05:05 GMT+0100 (GMT Daylight Time)
-</footer>
-
-<script> prettyPrint(); </script>
-<script src="scripts/linenumber.js"> </script>
-</body>
-</html>
