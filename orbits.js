@@ -129,6 +129,15 @@ orbits.Satellite = function(options) {
 }
 
 /**
+ * Set a Date instance or null to use the current datetime.
+ * Call refresh() to update the position afterward.
+ * @param   {Date} date - An instance of Date
+ */
+orbits.Satellite.prototype.setDate = function(map) {
+    this.date = date;
+}
+
+/**
  * Set the map instance to use
  * @param   {google.maps.Map} map - An instance of google.maps.Map
  */
