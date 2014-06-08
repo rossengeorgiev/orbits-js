@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Namespace: orbits</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Namespace: orbits</h1>
+
+    
+
+
+
+<section>
+
+<header>
+    <h2>
+    orbits
+    </h2>
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+
+    
+        
+            <div class="description">A tiny library that can parse TLE, and display the orbit on the map</div>
+        
+
+        
+<dl class="details">
+    
+
+    
+    <dt class="tag-version">Version:</dt>
+    <dd class="tag-version"><ul class="dummy"><li>1.0.0</li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-author">Author:</dt>
+    <dd class="tag-author">
+        <ul>
+            <li>Rossen Georgiev @ <a href="https://github.com/rossengeorgiev">https://github.com/rossengeorgiev</a></li>
+        </ul>
+    </dd>
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="orbits.js.html">orbits.js</a>, <a href="orbits.js.html#line10">line 10</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Classes</h3>
+
+        <dl>
+            <dt><a href="orbits.Orbit.html">Orbit</a></dt>
+            <dd></dd>
+        
+            <dt><a href="orbits.Satellite.html">Satellite</a></dt>
+            <dd></dd>
+        
+            <dt><a href="orbits.TLE.html">TLE</a></dt>
+            <dd></dd>
+        </dl>
+    
+
+    
+        <h3 class="subsection-title">Namespaces</h3>
+
+        <dl>
+            <dt><a href="namespaces.html#orbits.util"><a href="orbits.util.html">util</a></a></dt>
+            <dd></dd>
+        </dl>
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        <dl>
+            
+<dt>
+    <h4 class="name" id="SatelliteOptions"><span class="type-signature">&lt;static> </span>SatelliteOptions<span class="type-signature"></span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        Object with the default options for Satellite object
+    </div>
+    
+
+    
+
+    
+<dl class="details">
+    
+
+        <h5 class="subsection-title">Properties:</h5>
+
+        <dl>
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>tle</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="orbits.TLE.html">orbits.TLE</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">An instance of orbits.TLE</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>title</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Alternative title to use for the marker, instead of the one from TLE</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>pathLength</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">float</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The length is in periods. Length = period * pathLength</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>visible</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Whenever to display the map or not</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>map</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">google.maps.Map</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">An instance of google.maps.Map</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>marker</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">google.maps.Marker</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">An instance of google.maps.Marker to use instead of the default</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>polyline</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">google.maps.Polyline</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">An instance of google.maps.Polyline to use instead of the default</td>
+        </tr>
+
+    
+    </tbody>
+</table></dl>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="orbits.js.html">orbits.js</a>, <a href="orbits.js.html#line79">line 79</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+</dd>
+
+        </dl>
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Index</a></h2><h3>Classes</h3><ul><li><a href="orbits.Orbit.html">Orbit</a></li><li><a href="orbits.Satellite.html">Satellite</a></li><li><a href="orbits.TLE.html">TLE</a></li></ul><h3>Namespaces</h3><ul><li><a href="orbits.html">orbits</a></li><li><a href="orbits.util.html">util</a></li></ul>
+</nav>
+
+<br clear="both">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-alpha5</a> on Sun Jun 08 2014 06:56:14 GMT+0100 (GMT Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
