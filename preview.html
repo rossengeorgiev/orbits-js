@@ -46,101 +46,63 @@ $.get("stations.txt", function(data) {
     var i = 0;
     for(;i < stations.length; i++) {
         var name = stations[i].name;
-        var marker = null;
-        var poly = null;
+        var satOpts = {
+            map: map,
+            tle: stations[i],
+            pathLength: 3,
+        };
 
         if(name == "ISS (ZARYA)") {
-            marker = new google.maps.Marker({
+            satOpts.markerOpts = {
                 icon: {
                     url: "img/iss.png",
                     size: new google.maps.Size(65,50),
                     scaledSize: new google.maps.Size(65,50),
-                    anchor: new google.maps.Point(25,30),
+                    anchor: new google.maps.Point(30,30),
                 },
-                zIndex: 100,
-            });
-            poly = new google.maps.Polyline({
+            };
+
+            satOpts.polylineOpts = {
                 strokeWeight: 2,
                 strokeColor: "blue",
                 strokeOpacity: 0.6
-            });
-        }
-        else if(name == "LITUANICASAT-1") {
-            marker = new google.maps.Marker({
-                icon: {
-                    url: "img/LY5N.png",
-                    size: new google.maps.Size(50,50),
-                    scaledSize: new google.maps.Size(50,50),
-                    anchor: new google.maps.Point(25,25),
-                },
-                zIndex: 100,
-            });
-            poly = new google.maps.Polyline({
-                strokeWeight: 2,
-                strokeColor: "red",
-                strokeOpacity: 0.6
-            });
+            };
         }
         else if(name == "TIANGONG 1") {
-            marker = new google.maps.Marker({
+            satOpts.markerOpts = {
                 icon: {
                     url: "img/TIANGONG1.png",
                     size: new google.maps.Size(70,40),
                     scaledSize: new google.maps.Size(70,40),
                     anchor: new google.maps.Point(25,10),
                 },
-                zIndex: 100,
-            });
-            poly = new google.maps.Polyline({
+            };
+
+            satOpts.polylineOpts = {
                 strokeWeight: 2,
                 strokeColor: "#c700e6",
                 strokeOpacity: 0.6
-            });
-        }
-        else if(name == "SKYCUBE") {
-            marker = new google.maps.Marker({
-                icon: {
-                    url: "img/skycube.png",
-                    size: new google.maps.Size(35,35),
-                    scaledSize: new google.maps.Size(35,35),
-                    anchor: new google.maps.Point(16,16),
-                },
-                zIndex: 100,
-            });
-            poly = new google.maps.Polyline({
-                strokeWeight: 2,
-                strokeColor: "green",
-                strokeOpacity: 0.6
-            });
+            };
         }
         else {
-            marker = new google.maps.Marker({
-                icon: {
-                    url: "img/other.png",
-                    size: new google.maps.Size(20,20),
-                    scaledSize: new google.maps.Size(20,20),
-                    anchor: new google.maps.Point(10,10),
-                },
-                zIndex: 1,
-            });
+            continue;
         }
 
-        // hide orbit paths for debries
-        var length = (name.indexOf("FLOCK") == -1 ) ? 3 : 0;
-
-        sats.push(new orbits.Satellite({
-            map:map,
-            tle: stations[i],
-            pathLength: length,
-            marker: marker,
-            polyline: poly
-        }));
+        var sat = new orbits.Satellite(satOpts);
+        sat.refresh()
+        sat.refresh_path();
+        sats.push(sat);
     }
 
     setInterval(function() {
         var i = 0;
         for(;i < sats.length; i++) sats[i].refresh();
-    }, 2000);
+    }, 500);
+
+    setInterval(function() {
+        var i = 0;
+        for(;i < sats.length; i++) sats[i].refresh_path();
+    }, 5*60000);
 });
 
         </script>

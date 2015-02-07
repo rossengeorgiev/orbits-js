@@ -4,15 +4,28 @@
  * @description A tiny library that can parse TLE, and display the orbit on the map
  * @requires: GMaps API 3
  *
- * @version 1.0.0
+ * @version 1.1.1
  * @namespace
  */
 var orbits = {
-    version: '1.0.1',
+    version: '1.1.1',
     /**
      * @namespace
      */
     util: {}
+};
+
+/**
+ * merge two objects together, b takes precedence
+ * @param   {Object} a - First object instance
+ * @param   {Object} b - Second object instance
+ * @returns {Object}
+ */
+orbits.util.mergeOpts = function(a, b) {
+    var k, result = {};
+    for(k in a) result[k] = a[k];
+    for(k in b) result[k] = b[k];
+    return result;
 };
 
 /**
@@ -38,6 +51,15 @@ orbits.util.gmst = function(date) {
     gmst = (gmst * (Math.PI/180) / 240.0) % (Math.PI*2);
     gmst += (gmst<0) ? Math.PI*2 : 0;
     return gmst;
+};
+
+/**
+ * Get distance to to true horizon
+ * @param   {float} altitude - In meters
+ * @returns {float}
+ */
+orbits.util.getDistanceToHorizon = function(altitude) {
+    return Math.round(Math.sqrt(12.756 * altitude)) * 1000;
 };
 
 /**
@@ -69,13 +91,14 @@ orbits.util.parseTLE = function(text) {
 
 /**
  *Object with the default options for Satellite object
- * @prop {orbits.TLE}           tle          - An instance of orbits.TLE
- * @prop {string}               title        - Alternative title to use for the marker, instead of the one from TLE
- * @prop {float}                pathLength   - The length is in periods. Length = period * pathLength
- * @prop {boolean}              visible      - Whenever to display the map or not
- * @prop {google.maps.Map}      map          - An instance of google.maps.Map
- * @prop {google.maps.Marker}   marker       - An instance of google.maps.Marker to use instead of the default
- * @prop {google.maps.Polyline} polyline     - An instance of google.maps.Polyline to use instead of the default
+ * @prop {orbits.TLE}                   tle          - An instance of orbits.TLE
+ * @prop {string}                       title        - Alternative title to use for the marker, instead of the one from TLE
+ * @prop {float}                        pathLength   - The length is in periods. Length = period * pathLength
+ * @prop {boolean}                      visible      - Whenever to display the map or not
+ * @prop {google.maps.Map}              map          - An instance of google.maps.Map
+ * @prop {google.maps.MarkerOptions}    markerOpts   - An instance of google.maps.MarkerOptions
+ * @prop {google.maps.CircleOptions}    horzionOpts  - An instance of google.maps.CircleOptions
+ * @prop {google.maps.PolylineOptions}  polylineOpts - An instance of google.maps.PolylineOptions
  */
 orbits.SatelliteOptions = {
     tle: "",
@@ -83,8 +106,24 @@ orbits.SatelliteOptions = {
     pathLength: 1,
     visible: true,
     map: null,
-    marker: null,
-    polyline: null,
+    markerOpts: {
+        zIndex: 50,
+    },
+    horizonOpts: {
+        radius: 0,
+        zIndex: 10,
+        strokeWeight: 2,
+        strokeColor: "white",
+        strokeOpacity: 0.8,
+        fillColor: "white",
+        fillOpacity: 0.2,
+    },
+    polylineOpts: {
+        zIndex: 20,
+        strokeWeight: 2,
+        strokeColor: "blue",
+        strokeOpacity: 0.8
+    },
 };
 
 /**
@@ -106,17 +145,24 @@ orbits.Satellite = function(options) {
 
     var opt;
     for(opt in orbits.SatelliteOptions) {
-        // if an option is set, use it, otherwise use the default
-        this[opt] = (opt in options) ? options[opt] : orbits.SatelliteOptions[opt];
+        if(opt in options) {
+            if(typeof orbits.SatelliteOptions[opt] === "object" && orbits.SatelliteOptions[opt] !== null) {
+                this[opt] = orbits.util.mergeOpts(orbits.SatelliteOptions[opt], options[opt]);
+            }
+            else {
+                this[opt] = options[opt];
+            }
+        }
+        else {
+            this[opt] = orbits.SatelliteOptions[opt];
+        }
     }
 
     // init map elements, if note are set
-    this.marker = (this.marker) ? this.marker : new google.maps.Marker();
-    this.polyline = (this.polyline) ? this.polyline : new google.maps.Polyline({
-        strokeWeight: 2,
-        strokeColor: "blue",
-        strokeOpacity: 0.8
-    });
+    this.marker = new google.maps.Marker(this.markerOpts);
+    this.horizon = new google.maps.Circle(this.horizonOpts);
+    this.horizon.bindTo('center', this.marker, 'position');
+    this.polyline = new google.maps.Polyline(this.polylineOpts);
 
     // attach markers to map
     if(this.visible) this.setMap(this.map);
@@ -145,6 +191,7 @@ orbits.Satellite.prototype.setDate = function(map) {
 orbits.Satellite.prototype.setMap = function(map) {
     this.map = map;
     this.marker.setMap(this.map);
+    this.horizon.setMap(this.map);
     this.polyline.setMap(this.map);
 };
 
@@ -158,8 +205,15 @@ orbits.Satellite.prototype.refresh = function() {
     this.orbit.propagate();
     this.position = this.orbit.getPosition();
     this.marker.setPosition(this.position);
+    var alt = this.orbit.getAltitude() * 1000;
+    this.horizon.setRadius(orbits.util.getDistanceToHorizon(alt));
+};
 
-    if(this.pathLength >= 1.0/180) this._updatePoly();
+/**
+ *Redraw path
+ */
+orbits.Satellite.prototype.refresh_path = function() {
+    if(this.pathLength >= 1.0/360) this._updatePoly();
 };
 
 orbits.Satellite.prototype._initOrbit = function() {
@@ -168,12 +222,12 @@ orbits.Satellite.prototype._initOrbit = function() {
 };
 
 orbits.Satellite.prototype._updatePoly = function() {
-    var dt = this.orbit.period*1000 / 180;
+    var dt = this.orbit.period*1000 / 360;
     var date = (this.date) ? this.date : new Date();
     this.path = [this.position];
 
     var i = 1;
-    var jj = 180 * this.pathLength;
+    var jj = 360 * this.pathLength;
     for(; i <= jj; i++) {
         this.orbit.setDate(new Date(date.getTime() + dt*i));
         this.orbit.propagate();
