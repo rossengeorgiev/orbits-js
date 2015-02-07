@@ -1,0 +1,24 @@
+{
+    "tags": {
+        "allowUnknownTags": true
+    },
+    "source": {
+        "include": [
+            "README.md",
+            "orbits.js"
+        ]
+    },
+    "plugins": [],
+    "templates": {
+        "cleverLinks": false,
+        "monospaceLinks": false
+    },
+    "opts": {
+        "template": "templates/default",
+        "encoding": "utf8",
+        "destination": ".",
+        "recurse": true,
+        "private": true,
+        "lenient": true
+    }
+}
