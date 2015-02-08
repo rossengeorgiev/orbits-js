@@ -4,11 +4,11 @@
  * @description A tiny library that can parse TLE, and display the orbit on the map
  * @requires: GMaps API 3
  *
- * @version 1.1.1
+ * @version 1.1.2
  * @namespace
  */
 var orbits = {
-    version: '1.1.1',
+    version: '1.1.2',
     /**
      * @namespace
      */
@@ -120,6 +120,7 @@ orbits.SatelliteOptions = {
     },
     polylineOpts: {
         zIndex: 20,
+        geodesic: true,
         strokeWeight: 2,
         strokeColor: "blue",
         strokeOpacity: 0.8
@@ -213,7 +214,7 @@ orbits.Satellite.prototype.refresh = function() {
  *Redraw path
  */
 orbits.Satellite.prototype.refresh_path = function() {
-    if(this.pathLength >= 1.0/360) this._updatePoly();
+    if(this.pathLength >= 1.0/180) this._updatePoly();
 };
 
 orbits.Satellite.prototype._initOrbit = function() {
@@ -222,12 +223,12 @@ orbits.Satellite.prototype._initOrbit = function() {
 };
 
 orbits.Satellite.prototype._updatePoly = function() {
-    var dt = this.orbit.period*1000 / 360;
+    var dt = this.orbit.period*1000 / 180;
     var date = (this.date) ? this.date : new Date();
     this.path = [this.position];
 
     var i = 1;
-    var jj = 360 * this.pathLength;
+    var jj = 180 * this.pathLength;
     for(; i <= jj; i++) {
         this.orbit.setDate(new Date(date.getTime() + dt*i));
         this.orbit.propagate();
