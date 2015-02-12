@@ -4,11 +4,11 @@
  * @description A tiny library that can parse TLE, and display the orbit on the map
  * @requires: GMaps API 3
  *
- * @version 1.1.2
+ * @version 1.1.3
  * @namespace
  */
 var orbits = {
-    version: '1.1.2',
+    version: '1.1.3',
     /**
      * @namespace
      */
@@ -54,12 +54,12 @@ orbits.util.gmst = function(date) {
 };
 
 /**
- * Get distance to to true horizon
+ * Get distance to true horizon in meters
  * @param   {float} altitude - In meters
  * @returns {float}
  */
 orbits.util.getDistanceToHorizon = function(altitude) {
-    return Math.round(Math.sqrt(12.756 * altitude)) * 1000;
+    return Math.sqrt(12.756 * altitude) * 1000;
 };
 
 /**
