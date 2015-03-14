@@ -802,6 +802,6 @@ orbits.Orbit.prototype.getVelocity = function() {
  *get period in seconds
  * @returns {float}
  */
-orbits.Orbit.prototype.getSpeed = function() {
+orbits.Orbit.prototype.getPeriod = function() {
     return this.period;
 };
