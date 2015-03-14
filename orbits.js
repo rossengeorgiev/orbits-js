@@ -181,7 +181,7 @@ orbits.Satellite = function(options) {
  * Call refresh() to update the position afterward.
  * @param   {Date} date - An instance of Date
  */
-orbits.Satellite.prototype.setDate = function(map) {
+orbits.Satellite.prototype.setDate = function(date) {
     this.date = date;
 };
 
