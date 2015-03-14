@@ -170,7 +170,7 @@ orbits.Satellite = function(options) {
 
     // check if we have TLE and init orbit
     if(this.tle !== null && !(this.tle instanceof orbits.TLE)) this.tle = null;
-    if(this.tle !== null) this._initOrbit();
+    if(this.tle !== null) this.setTLE(this.tle);
 
     // refresh
     this.refresh();
@@ -217,9 +217,13 @@ orbits.Satellite.prototype.refresh_path = function() {
     if(this.pathLength >= 1.0/180) this._updatePoly();
 };
 
-orbits.Satellite.prototype._initOrbit = function() {
-    this.orbit = new orbits.Orbit(this.tle);
-    this.marker.setTitle(this.tle.name);
+/**
+ * Set TLE for this satellite
+ * @param   {orbits.TLE} tle - An instance of orbits.TLE
+ */
+orbits.Satellite.prototype.setTLE = function(tle) {
+    this.orbit = new orbits.Orbit(tle);
+    this.marker.setTitle(tle.name);
 };
 
 orbits.Satellite.prototype._updatePoly = function() {
