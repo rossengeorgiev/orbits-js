@@ -128,7 +128,7 @@ orbits.SatelliteOptions = {
 };
 
 /**
- *Initializes a Satellite object
+ *Initializes a Satellite object (requires Google Maps API3)
  * @class
  * @param   {orbits.SatelliteOptions} options - an obj with options, see orbits.SatelliteOptions
  */
@@ -204,7 +204,7 @@ orbits.Satellite.prototype.refresh = function() {
 
     this.orbit.setDate(this.date);
     this.orbit.propagate();
-    this.position = this.orbit.getPosition();
+    this.position = this.orbit.getLatLng();
     this.marker.setPosition(this.position);
     var alt = this.orbit.getAltitude() * 1000;
     this.horizon.setRadius(orbits.util.getDistanceToHorizon(alt));
@@ -232,7 +232,7 @@ orbits.Satellite.prototype._updatePoly = function() {
     for(; i <= jj; i++) {
         this.orbit.setDate(new Date(date.getTime() + dt*i));
         this.orbit.propagate();
-        this.path.push(this.orbit.getPosition());
+        this.path.push(this.orbit.getLatLng());
     }
 
     this.polyline.setPath(this.path);
@@ -767,10 +767,18 @@ orbits.Orbit.prototype.setDate = function(date) {
 };
 
 /**
+ * get position
+ * @returns {float[]} [latitude, longitude]
+ */
+orbits.Orbit.prototype.getPosition = function() {
+    return [this.latitude, this.longitude];
+};
+
+/**
  * get position in LatLng
  * @returns {google.maps.LatLng}
  */
-orbits.Orbit.prototype.getPosition = function() {
+orbits.Orbit.prototype.getLatLng = function() {
     return new google.maps.LatLng(this.latitude, this.longitude);
 };
 
