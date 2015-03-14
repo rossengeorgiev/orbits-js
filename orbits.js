@@ -4,11 +4,11 @@
  * @description A tiny library that can parse TLE, and display the orbit on the map
  * @requires: GMaps API 3
  *
- * @version 1.1.3
+ * @version 1.2.0
  * @namespace
  */
 var orbits = {
-    version: '1.1.3',
+    version: '1.2.0',
     /**
      * @namespace
      */
@@ -62,6 +62,48 @@ orbits.util.getDistanceToHorizon = function(altitude) {
     return Math.sqrt(12.756 * altitude) * 1000;
 };
 
+orbits.util.halfEarthCircumference = parseInt(6371 * Math.PI * 500);
+
+/**
+ * Calculate position of the sun for a given date
+ * @param   {Date} date - An instance of Date
+ * @returns {float[]} [latitude, longitude]
+ */
+orbits.util.calculatePositionOfSun = function(date) {
+    date = (date instanceof Date) ? date : new Date();
+
+    var rad = 0.017453292519943295;
+
+    // based on NOAA solar calculations
+    var mins_past_midnight = (date.getUTCHours() * 60 + date.getUTCMinutes()) / 1440;
+    var jc = (this.jday(date) - 2451545)/36525;
+    var mean_long_sun = (280.46646+jc*(36000.76983+jc*0.0003032)) % 360;
+    var mean_anom_sun = 357.52911+jc*(35999.05029-0.0001537*jc);
+    var sun_eq = Math.sin(rad*mean_anom_sun)*(1.914602-jc*(0.004817+0.000014*jc))+Math.sin(rad*2*mean_anom_sun)*(0.019993-0.000101*jc)+Math.sin(rad*3*mean_anom_sun)*0.000289;
+    var sun_true_long = mean_long_sun + sun_eq;
+    var sun_app_long = sun_true_long - 0.00569 - 0.00478*Math.sin(rad*125.04-1934.136*jc);
+    var mean_obliq_ecliptic = 23+(26+((21.448-jc*(46.815+jc*(0.00059-jc*0.001813))))/60)/60;
+    var obliq_corr = mean_obliq_ecliptic + 0.00256*Math.cos(rad*125.04-1934.136*jc);
+    var lat = Math.asin(Math.sin(rad*obliq_corr)*Math.sin(rad*sun_app_long)) / rad;
+    var eccent = 0.016708634-jc*(0.000042037+0.0000001267*jc);
+    var y = Math.tan(rad*(obliq_corr/2))*Math.tan(rad*(obliq_corr/2));
+    var rq_of_time = 4*((y*Math.sin(2*rad*mean_long_sun)-2*eccent*Math.sin(rad*mean_anom_sun)+4*eccent*y*Math.sin(rad*mean_anom_sun)*Math.cos(2*rad*mean_long_sun)-0.5*y*y*Math.sin(4*rad*mean_long_sun)-1.25*eccent*eccent*Math.sin(2*rad*mean_anom_sun))/rad);
+    var true_solar_time = (mins_past_midnight*1440+rq_of_time) % 1440;
+    var lng = -((true_solar_time/4 < 0) ? true_solar_time/4 + 180 : true_solar_time/4 - 180);
+
+    return [lat, lng];
+};
+
+/**
+ * Calculate LatLng of the sun for a given date
+ * @param   {Date} date - An instance of Date
+ * @returns {google.maps.LatLng}
+ */
+orbits.util.calculateLatLngOfSun = function(date) {
+    var pos = orbits.util.calculatePositionOfSun(date);
+    return new google.maps.LatLng(pos[0], pos[1]);
+};
+
 /**
  * Parses a string with one or more TLEs
  * @param       {string} text - A string containing one or more TLEs
@@ -99,6 +141,8 @@ orbits.util.parseTLE = function(text) {
  * @prop {google.maps.MarkerOptions}    markerOpts   - An instance of google.maps.MarkerOptions
  * @prop {google.maps.CircleOptions}    horzionOpts  - An instance of google.maps.CircleOptions
  * @prop {google.maps.PolylineOptions}  polylineOpts - An instance of google.maps.PolylineOptions
+ * @prop {boolean}                      drawShadowPolylines - Whenever to draw indicators when Satellite is shadowed by Earth
+ * @prop {google.maps.PolylineOptions}  shadowPolylinesOpts - An instance of google.maps.PolylineOptions
  */
 orbits.SatelliteOptions = {
     tle: "",
@@ -125,10 +169,18 @@ orbits.SatelliteOptions = {
         strokeColor: "blue",
         strokeOpacity: 0.8
     },
+    drawShadowPolylines: true,
+    shadowPolylinesOpts: {
+        zIndex: 20,
+        geodesic: true,
+        strokeWeight: 5,
+        strokeColor: "blue",
+        strokeOpacity: 0.8
+    },
 };
 
 /**
- *Initializes a Satellite object
+ *Initializes a Satellite object (requires Google Maps API3)
  * @class
  * @param   {orbits.SatelliteOptions} options - an obj with options, see orbits.SatelliteOptions
  */
@@ -164,13 +216,14 @@ orbits.Satellite = function(options) {
     this.horizon = new google.maps.Circle(this.horizonOpts);
     this.horizon.bindTo('center', this.marker, 'position');
     this.polyline = new google.maps.Polyline(this.polylineOpts);
+    this.shadowPolylines = [];
 
     // attach markers to map
     if(this.visible) this.setMap(this.map);
 
     // check if we have TLE and init orbit
     if(this.tle !== null && !(this.tle instanceof orbits.TLE)) this.tle = null;
-    if(this.tle !== null) this._initOrbit();
+    if(this.tle !== null) this.setTLE(this.tle);
 
     // refresh
     this.refresh();
@@ -181,7 +234,7 @@ orbits.Satellite = function(options) {
  * Call refresh() to update the position afterward.
  * @param   {Date} date - An instance of Date
  */
-orbits.Satellite.prototype.setDate = function(map) {
+orbits.Satellite.prototype.setDate = function(date) {
     this.date = date;
 };
 
@@ -194,6 +247,7 @@ orbits.Satellite.prototype.setMap = function(map) {
     this.marker.setMap(this.map);
     this.horizon.setMap(this.map);
     this.polyline.setMap(this.map);
+    this.shadowPolylines.forEach(function(v) { v.setMap(this.map); });
 };
 
 /**
@@ -204,7 +258,7 @@ orbits.Satellite.prototype.refresh = function() {
 
     this.orbit.setDate(this.date);
     this.orbit.propagate();
-    this.position = this.orbit.getPosition();
+    this.position = this.orbit.getLatLng();
     this.marker.setPosition(this.position);
     var alt = this.orbit.getAltitude() * 1000;
     this.horizon.setRadius(orbits.util.getDistanceToHorizon(alt));
@@ -217,23 +271,58 @@ orbits.Satellite.prototype.refresh_path = function() {
     if(this.pathLength >= 1.0/180) this._updatePoly();
 };
 
-orbits.Satellite.prototype._initOrbit = function() {
-    this.orbit = new orbits.Orbit(this.tle);
-    this.marker.setTitle(this.tle.name);
+/**
+ * Set TLE for this satellite
+ * @param   {orbits.TLE} tle - An instance of orbits.TLE
+ */
+orbits.Satellite.prototype.setTLE = function(tle) {
+    this.orbit = new orbits.Orbit(tle);
+    this.marker.setTitle(tle.name);
 };
 
 orbits.Satellite.prototype._updatePoly = function() {
-    var dt = this.orbit.period*1000 / 180;
+    var dt = (this.orbit.getPeriod() * 1000) / 180;
     var date = (this.date) ? this.date : new Date();
-    this.path = [this.position];
+    this.path = [];
+    this.shadowPolylines.forEach(function(v) { v.setMap(null); });
+    this.shadowPolylines = [];
+    var night = false;
+    var curr_path = [];
+    var curr_poly = null;
+    var curr_date = null;
+    var curr_night = null;
 
-    var i = 1;
-    var jj = 180 * this.pathLength;
+    var i = 0;
+    var jj = (180 * this.pathLength) + 1;
     for(; i <= jj; i++) {
-        this.orbit.setDate(new Date(date.getTime() + dt*i));
+        curr_date = new Date(date.getTime() + dt*i);
+        this.orbit.setDate(curr_date);
         this.orbit.propagate();
-        this.path.push(this.orbit.getPosition());
+        var pos = this.orbit.getLatLng();
+        this.path.push(pos);
+
+        if(!this.drawShadowPolylines) continue;
+
+        var dist = google.maps.geometry.spherical.computeDistanceBetween(orbits.util.calculateLatLngOfSun(curr_date), pos);
+        curr_night = dist > orbits.util.halfEarthCircumference + orbits.util.getDistanceToHorizon(this.orbit.getAltitude() * 1000);
+
+        if(night === true && curr_night === true) {
+            curr_path.push(pos);
+        }
+        else if(night === true && curr_night === false) {
+            curr_poly.setPath(curr_path);
+        }
+        else if(night === false && curr_night === true) {
+            curr_poly = new google.maps.Polyline(this.shadowPolylinesOpts);
+            curr_poly.setMap(this.map);
+            this.shadowPolylines.push(curr_poly);
+
+            curr_path = [pos];
+        }
+        night = curr_night;
     }
+
+    if(night) curr_poly.setPath(curr_path);
 
     this.polyline.setPath(this.path);
 };
@@ -767,10 +856,18 @@ orbits.Orbit.prototype.setDate = function(date) {
 };
 
 /**
+ * get position
+ * @returns {float[]} [latitude, longitude]
+ */
+orbits.Orbit.prototype.getPosition = function() {
+    return [this.latitude, this.longitude];
+};
+
+/**
  * get position in LatLng
  * @returns {google.maps.LatLng}
  */
-orbits.Orbit.prototype.getPosition = function() {
+orbits.Orbit.prototype.getLatLng = function() {
     return new google.maps.LatLng(this.latitude, this.longitude);
 };
 
@@ -794,6 +891,6 @@ orbits.Orbit.prototype.getVelocity = function() {
  *get period in seconds
  * @returns {float}
  */
-orbits.Orbit.prototype.getSpeed = function() {
+orbits.Orbit.prototype.getPeriod = function() {
     return this.period;
 };
