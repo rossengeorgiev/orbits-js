@@ -4,11 +4,11 @@
  * @description A tiny library that can parse TLE, and display the orbit on the map
  * @requires: GMaps API 3
  *
- * @version 1.2.0
+ * @version 1.2.1
  * @namespace
  */
 var orbits = {
-    version: '1.2.0',
+    version: '1.2.1',
     /**
      * @namespace
      */
@@ -425,7 +425,7 @@ orbits.TLE.prototype.parse = function(text) {
      * @readonly
      */
     this.std = 0;
-    var tmp = lines[1].substring(44,52).split('-');
+    var tmp = lines[1].substring(44,52).split(/[+-]/);
     if(tmp.length == 3) this.std = -1 * parseFloat("."+tmp[1].trim()) * Math.pow(10,-parseInt(tmp[2]));
     else this.std = parseFloat("."+tmp[0].trim()) * Math.pow(10,-parseInt(tmp[1]));
 
@@ -435,7 +435,7 @@ orbits.TLE.prototype.parse = function(text) {
      * @readonly
      */
     this.bstar = 0;
-    tmp = lines[1].substring(53,61).split('-');
+    tmp = lines[1].substring(53,61).split(/[+-]/);
     if(tmp.length == 3) this.bstar = -1 * parseFloat("."+tmp[1].trim()) * Math.pow(10,-parseInt(tmp[2]));
     else this.bstar = parseFloat("."+tmp[0].trim()) * Math.pow(10,-parseInt(tmp[1]));
 
