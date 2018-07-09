@@ -68,25 +68,6 @@ $.get("stations.txt", function(data) {
                 strokeOpacity: 0.6
             };
         }
-        else if(name == "TIANGONG 1") {
-            satOpts.markerOpts = {
-                icon: {
-                    url: "img/TIANGONG1.png",
-                    size: new google.maps.Size(70,40),
-                    scaledSize: new google.maps.Size(70,40),
-                    anchor: new google.maps.Point(25,10),
-                },
-            };
-
-            satOpts.polylineOpts = {
-                strokeWeight: 2,
-                strokeColor: "#c700e6",
-                strokeOpacity: 0.6
-            };
-            satOpts.shadowPolylinesOpts = {
-                strokeColor: "#c700e6",
-            }
-        }
         else {
             continue;
         }
